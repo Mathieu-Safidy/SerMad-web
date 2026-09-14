@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html}">
+<body>
+
+<div th:fragment="content">
+    <div class="mb-6">
+        <a th:href="@{/web/demandes}" class="text-blue-600 hover:text-blue-800">&larr; Retour</a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Creer une demande</h1>
+
+        <form th:action="@{/web/demandes/creer}" method="post" class="space-y-6">
+            <!-- Citoyen -->
+            <div class="border-b pb-4">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">Information Citoyen</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Rechercher par email</label>
+                        <input type="email" name="emailCitoyen" id="emailCitoyen"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="email du citoyen">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">ID Citoyen</label>
+                        <input type="number" name="idCitoyen" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demande -->
+            <div class="border-b pb-4">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">Information Demande</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Libelle</label>
+                        <input type="text" name="libelle"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Ex: Demande CNI">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Reference *</label>
+                        <input type="text" name="reference" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Ex: DEM-2024-001">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Procedure</label>
+                        <select name="idProcedureMere"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Selectionner une procedure</option>
+                            <option th:each="proc : ${procedures}" th:value="${proc.idProcedureMere}"
+                                    th:text="${proc.document?.libelle}"></option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <button type="submit"
+                        class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+                    Creer la demande
+                </button>
+                <a th:href="@{/web/demandes}" class="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400">
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html}">
+<body>
+
+<div th:fragment="content">
+    <div class="mb-6">
+        <a th:href="@{/web/demandes/{id}(id=${demande.idDemande})}" class="text-blue-600 hover:text-blue-800">&larr; Retour</a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-8">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">QR Code - Demande <span th:text="${demande.reference}"></span></h1>
+        <p class="text-gray-600 mb-6">Presentez ce QR Code au citoyen pour qu'il puisse valider sa demande</p>
+
+        <div class="text-center" th:if="${qrCodeBase64 != null}">
+            <img th:src="'data:image/png;base64,' + ${qrCodeBase64}" alt="QR Code" class="mx-auto border-2 border-gray-200 rounded-lg p-4">
+            <p class="mt-4 text-sm text-gray-600">Le citoyen doit scanner ce QR Code avec l'application mobile</p>
+
+            <div class="mt-6 flex justify-center space-x-4">
+                <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+                    Imprimer
+                </button>
+                <a th:href="@{/web/demandes/{id}(id=${demande.idDemande})}"
+                   class="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400">
+                    Retour
+                </a>
+            </div>
+        </div>
+
+        <div class="text-center text-gray-500" th:if="${qrCodeBase64 == null}">
+            <p>Aucun QR Code disponible</p>
+            <a th:href="@{/web/demandes/{id}/generer-qrcode(id=${demande.idDemande})}"
+               class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">
+                Generer le QR Code
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

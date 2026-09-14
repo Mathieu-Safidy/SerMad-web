@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html}">
+<body>
+
+<div th:fragment="content">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Administrations</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div th:each="admin : ${administrations}" class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-800" th:text="${admin.libelle}"></h3>
+            <p class="text-gray-600 text-sm mt-1" th:text="${admin.typeAdm?.libelle}"></p>
+
+            <div th:each="loc : ${admin.localisations}" class="mt-3 text-sm">
+                <p class="text-gray-500">
+                    <span class="font-medium">Adresse:</span>
+                    <span th:text="${loc.adresse}"></span>
+                </p>
+                <p class="text-gray-500" th:if="${loc.codePostal}">
+                    <span class="font-medium">Code postal:</span>
+                    <span th:text="${loc.codePostal}"></span>
+                </p>
+            </div>
+
+            <div th:if="${#lists.isEmpty(admin.localisations)}" class="mt-3 text-sm text-gray-400">
+                Aucune localisation
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(administrations)}" class="text-center text-gray-500 py-12">
+        Aucune administration trouvee
+    </div>
+</div>
+
+</body>
+</html>

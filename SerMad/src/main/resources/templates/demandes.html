@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html}">
+<body>
+
+<div th:fragment="content">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Demandes</h1>
+        <a th:href="@{/web/demandes/creer}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+            + Creer une demande
+        </a>
+    </div>
+
+    <!-- Filtres -->
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+        <form th:action="@{/web/demandes}" method="get" class="flex space-x-4">
+            <input type="text" name="search" placeholder="Rechercher..." th:value="${search}"
+                   class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+            <select name="statut" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                <option value="">Tous les statuts</option>
+                <option value="1">En attente</option>
+                <option value="2">Validee</option>
+                <option value="3">En cours</option>
+                <option value="4">Terminee</option>
+                <option value="5">Rejetee</option>
+            </select>
+            <button type="submit" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+                Filtrer
+            </button>
+        </form>
+    </div>
+
+    <!-- Liste -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Libelle</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Citoyen</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                <tr th:each="demande : ${demandes}">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                        th:text="${demande.reference}"></td>
+                    <td class="px-6 py-4 text-sm text-gray-500"
+                        th:text="${demande.libelle}"></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                        th:text="${demande.user?.prenom + ' ' + demande.user?.nom}"></td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                              th:classappend="${demande.statutDemande?.libelle == 'Terminee'} ? 'bg-green-100 text-green-800' : (${demande.statutDemande?.libelle == 'Rejetee'} ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800')"
+                              th:text="${demande.statutDemande?.libelle}">
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                        <a th:href="@{/web/demandes/{id}(id=${demande.idDemande})}"
+                           class="text-blue-600 hover:text-blue-800">Voir</a>
+                        <a th:href="@{/web/demandes/{id}/qrcode(id=${demande.idDemande})}"
+                           class="text-green-600 hover:text-green-800">QR Code</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(demandes)}">
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">Aucune demande trouvee</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

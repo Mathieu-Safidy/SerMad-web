@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html}">
+<body>
+
+<div th:fragment="content">
+    <div class="mb-6">
+        <a th:href="@{/web/demandes}" class="text-blue-600 hover:text-blue-800">&larr; Retour aux demandes</a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Details demande -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h1 class="text-2xl font-bold text-gray-800 mb-4">Demande <span th:text="${demande.reference}"></span></h1>
+
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Libelle:</span>
+                    <span class="font-medium" th:text="${demande.libelle}"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Reference:</span>
+                    <span class="font-medium" th:text="${demande.reference}"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Statut:</span>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                          th:classappend="${demande.statutDemande?.libelle == 'Terminee'} ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                          th:text="${demande.statutDemande?.libelle}">
+                    </span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Citoyen:</span>
+                    <span class="font-medium" th:text="${demande.user?.prenom + ' ' + demande.user?.nom}"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Email:</span>
+                    <span class="font-medium" th:text="${demande.user?.email}"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Document:</span>
+                    <span class="font-medium" th:text="${demande.procedureMere?.document?.libelle}"></span>
+                </div>
+            </div>
+
+            <div class="mt-6 flex space-x-4">
+                <a th:href="@{/web/demandes/{id}/qrcode(id=${demande.idDemande})}"
+                   class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                    Generer QR Code
+                </a>
+            </div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="bg-white rounded-lg shadow p-6" th:if="${qrCodeBase64 != null}">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">QR Code</h2>
+            <div class="text-center">
+                <img th:src="'data:image/png;base64,' + ${qrCodeBase64}" alt="QR Code" class="mx-auto">
+                <p class="mt-4 text-sm text-gray-600">Presentez ce QR Code au citoyen</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historique -->
+    <div class="bg-white rounded-lg shadow p-6 mt-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Historique</h2>
+        <div class="space-y-3">
+            <div th:each="hist : ${historique}" class="flex items-center space-x-3">
+                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div>
+                    <span class="font-medium" th:text="${hist.action}"></span>
+                    <span class="text-gray-500 text-sm" th:text="${#dates.format(hist.dateAction, 'dd/MM/yyyy HH:mm')}"></span>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(historique)}" class="text-gray-500 text-center py-4">
+                Aucun historique
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
