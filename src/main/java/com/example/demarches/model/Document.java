@@ -20,6 +20,11 @@ public class Document {
 
     private Double dateDelivrance;
 
+    private Boolean estLieuUnique;
+
+    @Column(name = "dossier_", columnDefinition = "TEXT")
+    private String dossier;
+
     @ManyToOne
     @JoinColumn(name = "id_categorie", nullable = false)
     private Categorie categorie;
