@@ -56,6 +56,7 @@ public class DataInitializer implements CommandLineRunner {
         seedStatuts();
         seedGeographie();
         List<Administration> administrations = seedAdministrations();
+        seedFokontanyAdministrations();
         Map<String, User> users = seedUsers(citoyen, agent, admin);
         Map<String, ProcedureMere> procedures = seedDocumentsAndProcedures(administrations);
         if (demandeRepository.count() == 0 && !procedures.isEmpty() && !users.isEmpty()) {
@@ -150,7 +151,7 @@ Administration district = createAdministration(
         "District d'Antananarivo-Renivohitra", typeDistrict);
 
 Administration fktAnalakely = createAdministration(
-        "Fokontany Antanimalalaka-Analakely", typeFokontany);
+        "Fokontany Antanimalalaka", typeFokontany);
 
 Administration fktAmbatovinaky = createAdministration(
         "Fokontany Ambatovinaky", typeFokontany);
@@ -198,9 +199,9 @@ createLocalisation(
         district
 );
 
-// 3. Fokontany Antanimalalaka-Analakely
+// 3. Fokontany Antanimalalaka
 createLocalisation(
-        "Fokontany Antanimalalaka-Analakely",
+        "Fokontany Antanimalalaka",
         "Antanimalalaka, Analakely, Antananarivo 101",
         -18.9060,
         47.5240,
@@ -321,24 +322,24 @@ createLocalisation(
                 "Lot II G 12, Rue Rainilaiarivony, Analakely", fkt("Antanimalalaka"));
         User agentUser = createUser(
                 "Rakotomalala", "Tahiana", "agent@sermad.mg", "agent123", "0340000002", "107450150002",
-                "1985-06-28", "Antananarivo, Mahamasina", "Malagasy",
+                "1985-06-28", "Antananarivo, Antsahabe", "Malagasy",
                 "Rakotovao", "Ferdinand", "Rasoa", "Céline",
-                "Lot II H 45, Rue Andrianampoinimerina, Mahamasina", fkt("Mahamasina"));
+                "Lot II M 45, Antsahabe", fkt("Antsahabe"));
         User citoyenUser = createUser(
                 "Rakoto", "Nomeny", "citoyen@sermad.mg", "citoyen123", "0340000003", "107450150003",
                 "1995-03-20", "Antananarivo, Ambohijatovo", "Malagasy",
                 "Rakotoarisoa", "Lucien", "Razanadrakoto", "Bako",
-                "Lot II H 89 bis, Rue Patrice Lumumba, Ambohijatovo", fkt("Ambohijatovo"));
+                "Lot II H 89 bis, Ambohijatovo Fara", fkt("Ambohijatovo Fara"));
         User citoyen2 = createUser(
                 "Rasoa", "Voahangy", "voahangy@sermad.mg", "citoyen123", "0340000004", "107450150004",
-                "1998-11-05", "Antananarivo, Antsakaviro", "Malagasy",
+                "1998-11-05", "Antananarivo, Analamahitsy", "Malagasy",
                 "Rasoamanarivo", "Hery", "Razafindrakoto", "Lalao",
-                "Lot II T 23, Antsakaviro", fkt("Antsakaviro"));
+                "Lot II T 23, Analamahitsy", fkt("Analamahitsy"));
         User citoyen3 = createUser(
                 "Rabe", "Solofo", "solofo@sermad.mg", "citoyen123", "0340000005", "107450150005",
-                "1988-07-14", "Antananarivo, Anosy", "Malagasy",
+                "1988-07-14", "Antananarivo, Soavimasoandro", "Malagasy",
                 "Rabenjamina", "Albert", "Razanamparany", "Julienne",
-                "Lot II D 77, Rue Docteur Raseta, Anosy", fkt("Anosy"));
+                "Lot II D 77, Soavimasoandro", fkt("Soavimasoandro"));
 
         assignProfile(adminUser, admin);
         assignProfile(agentUser, agent);
@@ -387,7 +388,7 @@ createLocalisation(
                 Formulaire de demande
                 Frais de dossier: 2 000 Ar
                 """);
-        Document docCIN = createDocument("CIN", 18, false, catIdentite, adm(administrations, "District d'Antananarivo-Renivohitra"), typeCNI, """
+        Document docCIN = createDocument("CIN", 18, false, catIdentite, adm(administrations, "Commune Urbaine d'Antananarivo (CUA)"), typeCNI, """
                 Nom, prénom, date de naissance
                 Lieu de naissance
                 Adresse de résidence, fokontany
@@ -403,7 +404,7 @@ createLocalisation(
                 Formulaire de demande
                 Frais de dossier: 150 000 Ar
                 """);
-        Document docCertifResidence = createDocument("Certificat de résidence", 0, false, catResidence, adm(administrations, "Fokontany Antanimalalaka-Analakely"), typeJusticDomicile, """
+        Document docCertifResidence = createDocument("Certificat de résidence", 0, false, catResidence, adm(administrations, "Fokontany Antanimalalaka"), typeJusticDomicile, """
                 Pièce d'identité
                 Formulaire de demande
                 Certificat d'inhabitation du fokontany
@@ -633,26 +634,77 @@ createLocalisation(
 
         Commune cua = createCommune("Commune Urbaine d'Antananarivo");
 
-        Arrondissement arAnalakely = createArrondissement("Analakely", cua);
-        Arrondissement arAntsakaviro = createArrondissement("Antsakaviro", cua);
-        Arrondissement arAmbohijatovo = createArrondissement("Ambohijatovo", cua);
-        Arrondissement arMahamasina = createArrondissement("Mahamasina", cua);
-        Arrondissement arManjakamiadana = createArrondissement("Manjakamiadana", cua);
-        Arrondissement arAmpasamadinika = createArrondissement("Ampasamadinika", cua);
+        Arrondissement ar1 = createArrondissement("1er arrondissement", cua);
+        Arrondissement ar2 = createArrondissement("2e arrondissement", cua);
+        Arrondissement ar3 = createArrondissement("3e arrondissement", cua);
+        Arrondissement ar4 = createArrondissement("4e arrondissement", cua);
+        Arrondissement ar5 = createArrondissement("5e arrondissement", cua);
+        Arrondissement ar6 = createArrondissement("6e arrondissement", cua);
 
-        createFokontany("Antanimalalaka", arAnalakely);
-        createFokontany("Ambatovinaky", arAnalakely);
-        createFokontany("Fihaonana", arAnalakely);
-        createFokontany("Ambodirano", arAntsakaviro);
-        createFokontany("Antsakaviro", arAntsakaviro);
-        createFokontany("Ambohijatovo", arAmbohijatovo);
-        createFokontany("Andravoahangy", arAmbohijatovo);
-        createFokontany("Mahamasina", arMahamasina);
-        createFokontany("Ankadifotsy", arMahamasina);
-        createFokontany("Anosy", arManjakamiadana);
-        createFokontany("Manjakamiadana", arManjakamiadana);
-        createFokontany("Ampasamadinika", arAmpasamadinika);
-        createFokontany("Mandialaza", arAmpasamadinika);
+// ===== 1er arrondissement =====
+        createFokontany("Antanimalalaka", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Ambalavao Isotry", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Ambatonakanga", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Ambohitsorohitra", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Ambatovinaky", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Soarano Ambondrona", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Ambodifilao", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Ampandrana Ankadivato", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Amparibe Ambohidahy", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Mahamasina", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Amboasarikely", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Ambatomena", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Anatihazo Isotry", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Andohatapenaka", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Antohomadinika", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Cité 67 Ha", ar1, "Commune Rurale d'Ambohidratrimo");
+        createFokontany("Ankasina", ar1, "Commune Rurale d'Ambohidratrimo");
+
+// ===== 2e arrondissement =====
+        createFokontany("Faliarivo Ambanidia", ar2, "Commune Rurale d'Androhibe");
+        createFokontany("Antanimora Ampasanimalo", ar2, "Commune Rurale d'Androhibe");
+        createFokontany("Antsahabe", ar2, "Commune Rurale d'Androhibe");
+        createFokontany("Ankorahotra Ankazoto", ar2, "Commune Rurale d'Androhibe");
+        createFokontany("Ambohitsiroa", ar2, "Commune Rurale d'Androhibe");
+        createFokontany("Ankazotokana Ambony", ar2, "Commune Rurale d'Androhibe");
+        createFokontany("Tsiadana", ar2, "Commune Rurale d'Androhibe");
+        createFokontany("Volosarika Ambanidia", ar2, "Commune Rurale d'Androhibe");
+        createFokontany("Andafiavaratra", ar2, "Commune Rurale d'Androhibe");
+        createFokontany("Ambavahadimitafo", ar2, "Commune Rurale d'Androhibe");
+        createFokontany("Andohamandry", ar2, "Commune Rurale d'Androhibe");
+
+// ===== 3e arrondissement =====
+        createFokontany("Antaninandro", ar3, "Commune Rurale d'Ambohimangakely");
+        createFokontany("Ambohijanahary", ar3, "Commune Rurale d'Ambohimangakely");
+        createFokontany("Ankorondrano Andranomahery", ar3, "Commune Rurale d'Ambohimangakely");
+        createFokontany("Ankorondrano Atsinanana", ar3, "Commune Rurale d'Ambohimangakely");
+        createFokontany("Ankorondrano Andrefana", ar3, "Commune Rurale d'Ambohimangakely");
+        createFokontany("Ankazomanga Andraharo", ar3, "Commune Rurale d'Ambohimangakely");
+        createFokontany("Ambodivona Ankadifotsy", ar3, "Commune Rurale d'Ambohimangakely");
+
+// ===== 4e arrondissement =====
+        createFokontany("Ampefiloha", ar4, "Commune Rurale d'Ambohitrimanjaka");
+        createFokontany("Ampasika", ar4, "Commune Rurale d'Ambohitrimanjaka");
+        createFokontany("Amboniloha", ar4, "Commune Rurale d'Ambohitrimanjaka");
+        createFokontany("Ambilanibe", ar4, "Commune Rurale d'Ambohitrimanjaka");
+        createFokontany("Ambohijatovo Fara", ar4, "Commune Rurale d'Ambohitrimanjaka");
+        createFokontany("Andrefan'Ambohijanahary", ar4, "Commune Rurale d'Ambohitrimanjaka");
+        createFokontany("Anosizato Est", ar4, "Commune Rurale d'Ambohitrimanjaka");
+        createFokontany("Anosipatrana Est", ar4, "Commune Rurale d'Ambohitrimanjaka");
+        createFokontany("Ampefiloha Ambodirano", ar4, "Commune Rurale d'Ambohitrimanjaka");
+
+// ===== 5e arrondissement =====
+        createFokontany("Soavimasoandro", ar5, "Commune Rurale d'Alasora");
+        createFokontany("Morarano Alarobia", ar5, "Commune Rurale d'Alasora");
+        createFokontany("Anjezika", ar5, "Commune Rurale d'Alasora");
+
+// ===== 6e arrondissement =====
+        createFokontany("Andraharo", ar6, "Commune Rurale d'Ankazondandy");
+        createFokontany("Ambodivonkely", ar6, "Commune Rurale d'Ankazondandy");
+        createFokontany("Avaratetezana", ar6, "Commune Rurale d'Ankazondandy");
+        createFokontany("Antanjombe Avaratra", ar6, "Commune Rurale d'Ankazondandy");
+        createFokontany("Ampefiloha Ankeniheny", ar6, "Commune Rurale d'Ankazondandy");
+        createFokontany("Analamahitsy", ar6, "Commune Rurale d'Ankazondandy");
 
         log.info("Géographie (1 commune, {} arrondissements, {} fokontany) insérée.",
                 arrondissementRepository.count(), fokontanyRepository.count());
@@ -663,6 +715,60 @@ createLocalisation(
                 .orElseThrow(() -> new IllegalStateException("Fokontany introuvable : " + libelle));
     }
 
+    private void seedFokontanyAdministrations() {
+        TypeAdm typeFokontany = typeAdmRepository.findByLibelle("Fokontany")
+                .orElseGet(() -> typeAdmRepository.save(TypeAdm.builder().libelle("Fokontany").build()));
+
+        List<Fokontany> fokontanys = fokontanyRepository.findAll();
+        if (fokontanys.isEmpty()) {
+            log.info("Aucun fokontany, administration de fokontany ignorée.");
+            return;
+        }
+
+        Map<String, Integer> indexParArrondissement = new HashMap<>();
+        int created = 0;
+        for (Fokontany fkt : fokontanys) {
+            String adminLibelle = "Fokontany " + fkt.getLibelle();
+            if (administrationRepository.findByLibelle(adminLibelle).isPresent()) {
+                continue;
+            }
+
+            String arrondissementLibelle = fkt.getArrondissement().getLibelle();
+            int index = indexParArrondissement.getOrDefault(arrondissementLibelle, 0);
+            indexParArrondissement.put(arrondissementLibelle, index + 1);
+
+            double[] centre = centreArrondissement(arrondissementLibelle);
+            double latitude = centre[0] + (index % 3) * 0.0038;
+            double longitude = centre[1] + ((index / 3) % 3) * 0.0034 - 0.005;
+
+            Administration adm = createAdministration(adminLibelle, typeFokontany);
+            createLocalisation(
+                    adminLibelle,
+                    fkt.getLibelle() + ", Antananarivo 101",
+                    latitude,
+                    longitude,
+                    "101",
+                    adm);
+            createService("Certificat de résidence et actes administratifs", adm);
+            created++;
+        }
+
+        if (created > 0) {
+            log.info("{} administrations de fokontany ajoutées (avec localisation).", created);
+        }
+    }
+
+    private double[] centreArrondissement(String libelle) {
+        return switch (libelle) {
+            case "1er arrondissement" -> new double[]{-18.904, 47.524};
+            case "2e arrondissement" -> new double[]{-18.892, 47.508};
+            case "3e arrondissement" -> new double[]{-18.901, 47.537};
+            case "4e arrondissement" -> new double[]{-18.917, 47.521};
+            case "5e arrondissement" -> new double[]{-18.923, 47.539};
+            default -> new double[]{-18.858, 47.519};
+        };
+    }
+
     private Commune createCommune(String libelle) {
         return communeRepository.save(Commune.builder().libelle(libelle).build());
     }
@@ -671,8 +777,8 @@ createLocalisation(
         return arrondissementRepository.save(Arrondissement.builder().libelle(libelle).commune(commune).build());
     }
 
-    private Fokontany createFokontany(String libelle, Arrondissement arrondissement) {
-        return fokontanyRepository.save(Fokontany.builder().libelle(libelle).arrondissement(arrondissement).build());
+    private Fokontany createFokontany(String libelle, Arrondissement arrondissement, String communeRurale) {
+        return fokontanyRepository.save(Fokontany.builder().libelle(libelle).arrondissement(arrondissement).communeRurale(communeRurale).build());
     }
 
     private void createDemande(String libelle, String reference, StatutDemande statut, ProcedureMere pm, User user) {
