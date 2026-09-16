@@ -30,6 +30,24 @@ public class User {
 
     private String dateNaissance;
 
+    private String lieuNaissance;
+
+    private String nationalite;
+
+    private String nomPere;
+
+    private String prenomPere;
+
+    private String nomMere;
+
+    private String prenomMere;
+
+    private String adresseResidence;
+
+    @ManyToOne
+    @JoinColumn(name = "id_fokontany_residence")
+    private Fokontany fokontanyResidence;
+
     @Column(nullable = false)
     private Boolean estActif = true;
 }

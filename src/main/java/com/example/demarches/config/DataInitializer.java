@@ -35,6 +35,9 @@ public class DataInitializer implements CommandLineRunner {
     private final StatutDemandeRepository statutDemandeRepository;
     private final LocalisationAdmRepository localisationAdmRepository;
     private final DemandeRepository demandeRepository;
+    private final CommuneRepository communeRepository;
+    private final ArrondissementRepository arrondissementRepository;
+    private final FokontanyRepository fokontanyRepository;
 
     @Override
     public void run(String... args) {
@@ -51,6 +54,7 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         seedStatuts();
+        seedGeographie();
         List<Administration> administrations = seedAdministrations();
         Map<String, User> users = seedUsers(citoyen, agent, admin);
         Map<String, ProcedureMere> procedures = seedDocumentsAndProcedures(administrations);
@@ -133,6 +137,7 @@ public class DataInitializer implements CommandLineRunner {
         TypeAdm typeTribunal = createTypeAdm("Tribunal");
         TypeAdm typeMinistere = createTypeAdm("Ministère");
         TypeAdm typeIdentification = createTypeAdm("Identification");
+        TypeAdm typeImmatriculation = createTypeAdm("Immatriculation");
 
 // ============================================================
 // ADMINISTRATIONS
@@ -170,6 +175,9 @@ Administration transports = createAdministration(
 
 Administration centreEnrolement = createAdministration(
         "Centre d'Enrôlement Biométrique (RECI)", typeIdentification);
+
+Administration centreImmatriculation = createAdministration(
+        "Centre d'Immatriculation Anosy", typeImmatriculation);
 // 1. CUA - Hôtel de Ville
 createLocalisation(
         "Commune Urbaine d'Antananarivo (CUA)",
@@ -270,6 +278,16 @@ createLocalisation(
         transports
 );
 
+// 11. Centre d'Immatriculation Anosy
+createLocalisation(
+        "Centre d'Immatriculation Anosy",
+        "Rue Rasoamanarivo, Anosy, Antananarivo 101",
+        -18.9162,
+        47.5198,
+        "101",
+        centreImmatriculation
+);
+
         createService("État Civil (actes de naissance, mariage, décès)", cua);
         createService("Urbanisme et domaines", cua);
         createService("Identification et carte nationale d'identité (CNI)", district);
@@ -282,6 +300,7 @@ createLocalisation(
         createService("Passeports - Contrôle de l'immigration et de l'émigration", msp);
         createService("Bureau des permis de conduire", transports);
         createService("Enrôlement biométrique et numéro d'identification", centreEnrolement);
+        createService("Immatriculation des véhicules et permis de conduire", centreImmatriculation);
 
         log.info("{} administrations insérées (Antananarivo).", administrationRepository.count());
         return administrationRepository.findAll();
@@ -295,11 +314,31 @@ createLocalisation(
             return users;
         }
 
-        User adminUser = createUser("Admin", "SerMad", "admin@sermad.mg", "admin123", "0340000001", "107450150001");
-        User agentUser = createUser("Rakotomalala", "Tahiana", "agent@sermad.mg", "agent123", "0340000002", "107450150002");
-        User citoyenUser = createUser("Rakoto", "Nomeny", "citoyen@sermad.mg", "citoyen123", "0340000003", "107450150003");
-        User citoyen2 = createUser("Rasoa", "Voahangy", "voahangy@sermad.mg", "citoyen123", "0340000004", "107450150004");
-        User citoyen3 = createUser("Rabe", "Solofo", "solofo@sermad.mg", "citoyen123", "0340000005", "107450150005");
+        User adminUser = createUser(
+                "Admin", "SerMad", "admin@sermad.mg", "admin123", "0340000001", "107450150001",
+                "1990-01-15", "Antananarivo, Analakely", "Malagasy",
+                "Rakotoarimanana", "Jean-Pierre", "Razafinjatovo", "Marie-Claire",
+                "Lot II G 12, Rue Rainilaiarivony, Analakely", fkt("Antanimalalaka"));
+        User agentUser = createUser(
+                "Rakotomalala", "Tahiana", "agent@sermad.mg", "agent123", "0340000002", "107450150002",
+                "1985-06-28", "Antananarivo, Mahamasina", "Malagasy",
+                "Rakotovao", "Ferdinand", "Rasoa", "Céline",
+                "Lot II H 45, Rue Andrianampoinimerina, Mahamasina", fkt("Mahamasina"));
+        User citoyenUser = createUser(
+                "Rakoto", "Nomeny", "citoyen@sermad.mg", "citoyen123", "0340000003", "107450150003",
+                "1995-03-20", "Antananarivo, Ambohijatovo", "Malagasy",
+                "Rakotoarisoa", "Lucien", "Razanadrakoto", "Bako",
+                "Lot II H 89 bis, Rue Patrice Lumumba, Ambohijatovo", fkt("Ambohijatovo"));
+        User citoyen2 = createUser(
+                "Rasoa", "Voahangy", "voahangy@sermad.mg", "citoyen123", "0340000004", "107450150004",
+                "1998-11-05", "Antananarivo, Antsakaviro", "Malagasy",
+                "Rasoamanarivo", "Hery", "Razafindrakoto", "Lalao",
+                "Lot II T 23, Antsakaviro", fkt("Antsakaviro"));
+        User citoyen3 = createUser(
+                "Rabe", "Solofo", "solofo@sermad.mg", "citoyen123", "0340000005", "107450150005",
+                "1988-07-14", "Antananarivo, Anosy", "Malagasy",
+                "Rabenjamina", "Albert", "Razanamparany", "Julienne",
+                "Lot II D 77, Rue Docteur Raseta, Anosy", fkt("Anosy"));
 
         assignProfile(adminUser, admin);
         assignProfile(agentUser, agent);
@@ -320,7 +359,8 @@ createLocalisation(
     private Map<String, ProcedureMere> seedDocumentsAndProcedures(List<Administration> administrations) {
         Map<String, ProcedureMere> procedures = new HashMap<>();
         if (documentRepository.count() > 0) {
-            log.info("Documents déjà présents, seed des documents ignoré.");
+            log.info("Documents déjà présents, mise à jour des champs manquants (estLieuUnique, dossier).");
+            backfillDocuments();
             return procedures;
         }
 
@@ -329,47 +369,72 @@ createLocalisation(
         Categorie catResidence = createCategorie("Résidence et domaine");
         Categorie catFiscal = createCategorie("Fiscal");
         Categorie catJustice = createCategorie("Justice");
-        Categorie catSocial = createCategorie("Sécurité sociale");
         Categorie catDeplacements = createCategorie("Déplacements");
 
         TypeDocument typeActeNaissance = createTypeDocument("Acte de naissance");
         TypeDocument typeCNI = createTypeDocument("Carte nationale d'identité");
-        TypeDocument typePasseport = createTypeDocument("Passeport");
         TypeDocument typePermis = createTypeDocument("Permis de conduire");
         TypeDocument typeJusticDomicile = createTypeDocument("Justificatif de résidence");
-        TypeDocument typeNationalite = createTypeDocument("Attestation de nationalité");
         TypeDocument typeCasier = createTypeDocument("Extrait de casier judiciaire");
         TypeDocument typeCertificatFiscal = createTypeDocument("Certificat fiscal");
-        TypeDocument typeAttestSocial = createTypeDocument("Attestation de sécurité sociale");
-        TypeDocument typeCarteGrise = createTypeDocument("Carte grise");
 
-        Document docExtraitNaissance = createDocument("Extrait d'acte de naissance", 0, catEtatCivil, adm(administrations, "Commune Urbaine d'Antananarivo (CUA)"), typeActeNaissance);
-        Document docCopieNaissance = createDocument("Copie intégrale d'acte de naissance", 0, catEtatCivil, adm(administrations, "Commune Urbaine d'Antananarivo (CUA)"), typeActeNaissance);
-        Document docCNI = createDocument("Carte nationale d'identité (CNI)", 18, catIdentite, adm(administrations, "District d'Antananarivo-Renivohitra"), typeCNI);
-        Document docCertifResidence = createDocument("Certificat de résidence", 0, catResidence, adm(administrations, "Fokontany Antanimalalaka-Analakely"), typeJusticDomicile);
-        Document docAttDomicile = createDocument("Attestation de domicile", 0, catResidence, adm(administrations, "Fokontany Ambatovinaky"), typeJusticDomicile);
-        Document docPasseport = createDocument("Passeport ordinaire malagasy", 0, catIdentite, adm(administrations, "Ministère de la Sécurité Publique (Police Nationale)"), typePasseport);
-        Document docCasier = createDocument("Extrait de casier judiciaire (bulletin n°3)", 0, catJustice, adm(administrations, "Tribunal de Première Instance d'Antananarivo"), typeCasier);
-        Document docNationalite = createDocument("Certificat de nationalité", 0, catJustice, adm(administrations, "Tribunal de Première Instance d'Antananarivo"), typeNationalite);
-        Document docPermis = createDocument("Permis de conduire (catégorie B)", 18, catDeplacements, adm(administrations, "Ministère des Transports et de la Météorologie"), typePermis);
-        Document docCarteGrise = createDocument("Carte grise (certificat d'immatriculation)", 18, catDeplacements, adm(administrations, "Ministère des Transports et de la Météorologie"), typeCarteGrise);
-        Document docNIF = createDocument("NIF - attestation d'immatriculation fiscale", 0, catFiscal, adm(administrations, "Direction Générale des Impôts (DGI)"), typeCertificatFiscal);
-        Document docQuittance = createDocument("Quittance de non-imposition", 0, catFiscal, adm(administrations, "Direction Générale des Impôts (DGI)"), typeCertificatFiscal);
-        Document docAffiliation = createDocument("Attestation d'affiliation à la CNaPS", 0, catSocial, adm(administrations, "CNaPS - Caisse Nationale de Prévoyance Sociale"), typeAttestSocial);
+        Document docActeNaissance = createDocument("Acte de naissance", 0, false, catEtatCivil, adm(administrations, "Commune Urbaine d'Antananarivo (CUA)"), typeActeNaissance, """
+                Nom, prénom, date de naissance
+                Lieu de naissance
+                Nom et prénom du père
+                Nom et prénom de la mère
+                Photocopie de la pièce d'identité
+                Formulaire de demande
+                Frais de dossier: 2 000 Ar
+                """);
+        Document docCIN = createDocument("CIN", 18, false, catIdentite, adm(administrations, "District d'Antananarivo-Renivohitra"), typeCNI, """
+                Nom, prénom, date de naissance
+                Lieu de naissance
+                Adresse de résidence, fokontany
+                Extrait d'acte de naissance
+                2 photos d'identité
+                Formulaire de demande
+                Taxe: 200 Ar
+                """);
+        Document docPermis = createDocument("Permis de conduire", 18, true, catDeplacements, adm(administrations, "Centre d'Immatriculation Anosy"), typePermis, """
+                Carte nationale d'identité
+                Certificat médical
+                2 photos d'identité
+                Formulaire de demande
+                Frais de dossier: 150 000 Ar
+                """);
+        Document docCertifResidence = createDocument("Certificat de résidence", 0, false, catResidence, adm(administrations, "Fokontany Antanimalalaka-Analakely"), typeJusticDomicile, """
+                Pièce d'identité
+                Formulaire de demande
+                Certificat d'inhabitation du fokontany
+                """);
+        Document docBulletinNaissance = createDocument("Bulletin de naissance", 0, false, catEtatCivil, adm(administrations, "Commune Urbaine d'Antananarivo (CUA)"), typeActeNaissance, """
+                Nom, prénom, date de naissance
+                Lieu de naissance
+                Nom et prénom du père
+                Nom et prénom de la mère
+                Photocopie de la pièce d'identité
+                Formulaire de demande de bulletin
+                Frais de dossier: 5 000 Ar
+                """);
+        Document docCasier = createDocument("Extrait de casier judiciaire B3", 0, false, catJustice, adm(administrations, "Tribunal de Première Instance d'Antananarivo"), typeCasier, """
+                Carte nationale d'identité
+                Formulaire de demande
+                Frais de dossier: 8 000 Ar
+                """);
+        Document docImpots = createDocument("Impôts", 0, true, catFiscal, adm(administrations, "Direction Générale des Impôts (DGI)"), typeCertificatFiscal, """
+                Carte nationale d'identité
+                NIF - attestation d'immatriculation fiscale
+                Formulaire de demande
+                """);
 
-        procedures.put(docExtraitNaissance.getLibelle(), createProcedureMere(docExtraitNaissance, 3.0, 2000.0));
-        procedures.put(docCopieNaissance.getLibelle(), createProcedureMere(docCopieNaissance, 5.0, 5000.0));
-        procedures.put(docCNI.getLibelle(), createProcedureMere(docCNI, 30.0, 200.0));
-        procedures.put(docCertifResidence.getLibelle(), createProcedureMere(docCertifResidence, 1.0, 2000.0));
-        procedures.put(docAttDomicile.getLibelle(), createProcedureMere(docAttDomicile, 1.0, 1000.0));
-        procedures.put(docPasseport.getLibelle(), createProcedureMere(docPasseport, 30.0, 150000.0));
-        procedures.put(docCasier.getLibelle(), createProcedureMere(docCasier, 5.0, 8000.0));
-        procedures.put(docNationalite.getLibelle(), createProcedureMere(docNationalite, 15.0, 10000.0));
+        procedures.put(docActeNaissance.getLibelle(), createProcedureMere(docActeNaissance, 3.0, 2000.0));
+        procedures.put(docCIN.getLibelle(), createProcedureMere(docCIN, 30.0, 200.0));
         procedures.put(docPermis.getLibelle(), createProcedureMere(docPermis, 20.0, 150000.0));
-        procedures.put(docCarteGrise.getLibelle(), createProcedureMere(docCarteGrise, 15.0, 100000.0));
-        procedures.put(docNIF.getLibelle(), createProcedureMere(docNIF, 7.0, 0.0));
-        procedures.put(docQuittance.getLibelle(), createProcedureMere(docQuittance, 5.0, 0.0));
-        procedures.put(docAffiliation.getLibelle(), createProcedureMere(docAffiliation, 7.0, 0.0));
+        procedures.put(docCertifResidence.getLibelle(), createProcedureMere(docCertifResidence, 1.0, 2000.0));
+        procedures.put(docBulletinNaissance.getLibelle(), createProcedureMere(docBulletinNaissance, 5.0, 5000.0));
+        procedures.put(docCasier.getLibelle(), createProcedureMere(docCasier, 5.0, 8000.0));
+        procedures.put(docImpots.getLibelle(), createProcedureMere(docImpots, 7.0, 0.0));
 
         log.info("{} documents et procédures insérés.", documentRepository.count());
         return procedures;
@@ -380,18 +445,100 @@ createLocalisation(
         User citoyen2 = users.get("voahangy@sermad.mg");
         User citoyen3 = users.get("solofo@sermad.mg");
 
-        createDemande("Demande d'extrait d'acte de naissance", "DEM-MG-001",
-                statut("En attente validation citoyen"), procedures.get("Extrait d'acte de naissance"), citoyenUser);
-        createDemande("Demande de carte nationale d'identité", "DEM-MG-002",
-                statut("Validée par citoyen"), procedures.get("Carte nationale d'identité (CNI)"), citoyenUser);
-        createDemande("Demande de passeport ordinaire", "DEM-MG-003",
-                statut("En cours de traitement"), procedures.get("Passeport ordinaire malagasy"), citoyen2);
-        createDemande("Demande de permis de conduire B", "DEM-MG-004",
-                statut("En attente validation citoyen"), procedures.get("Permis de conduire (catégorie B)"), citoyen3);
-        createDemande("Quittance de non-imposition 2026", "DEM-MG-005",
-                statut("Terminée"), procedures.get("Quittance de non-imposition"), citoyenUser);
+        createDemande("Demande d'acte de naissance", "DEM-MG-001",
+                statut("En attente validation citoyen"), procedures.get("Acte de naissance"), citoyenUser);
+        createDemande("Demande de CIN", "DEM-MG-002",
+                statut("Validée par citoyen"), procedures.get("CIN"), citoyenUser);
+        createDemande("Demande de permis de conduire", "DEM-MG-003",
+                statut("En cours de traitement"), procedures.get("Permis de conduire"), citoyen2);
+        createDemande("Demande de certificat de résidence", "DEM-MG-004",
+                statut("En attente validation citoyen"), procedures.get("Certificat de résidence"), citoyen3);
+        createDemande("Demande d'extrait de casier judiciaire B3", "DEM-MG-005",
+                statut("Terminée"), procedures.get("Extrait de casier judiciaire B3"), citoyenUser);
 
         log.info("Demandes d'exemple insérées.");
+    }
+
+    private void backfillDocuments() {
+        Map<String, Boolean> lieuUniqueParLibelle = Map.ofEntries(
+                Map.entry("Acte de naissance", false),
+                Map.entry("CIN", false),
+                Map.entry("Permis de conduire", true),
+                Map.entry("Certificat de résidence", false),
+                Map.entry("Bulletin de naissance", false),
+                Map.entry("Extrait de casier judiciaire B3", false),
+                Map.entry("Impôts", true)
+        );
+
+        Map<String, String> dossierParLibelle = Map.ofEntries(
+                Map.entry("Acte de naissance", """
+                        Nom, prénom, date de naissance
+                        Lieu de naissance
+                        Nom et prénom du père
+                        Nom et prénom de la mère
+                        Photocopie de la pièce d'identité
+                        Formulaire de demande
+                        Frais de dossier: 2 000 Ar
+                        """),
+                Map.entry("CIN", """
+                        Nom, prénom, date de naissance
+                        Lieu de naissance
+                        Adresse de résidence, fokontany
+                        Extrait d'acte de naissance
+                        2 photos d'identité
+                        Formulaire de demande
+                        Taxe: 200 Ar
+                        """),
+                Map.entry("Permis de conduire", """
+                        Carte nationale d'identité
+                        Certificat médical
+                        2 photos d'identité
+                        Formulaire de demande
+                        Frais de dossier: 150 000 Ar
+                        """),
+                Map.entry("Certificat de résidence", """
+                        Pièce d'identité
+                        Formulaire de demande
+                        Certificat d'inhabitation du fokontany
+                        """),
+                Map.entry("Bulletin de naissance", """
+                        Nom, prénom, date de naissance
+                        Lieu de naissance
+                        Nom et prénom du père
+                        Nom et prénom de la mère
+                        Photocopie de la pièce d'identité
+                        Formulaire de demande de bulletin
+                        Frais de dossier: 5 000 Ar
+                        """),
+                Map.entry("Extrait de casier judiciaire B3", """
+                        Carte nationale d'identité
+                        Formulaire de demande
+                        Frais de dossier: 8 000 Ar
+                        """),
+                Map.entry("Impôts", """
+                        Carte nationale d'identité
+                        NIF - attestation d'immatriculation fiscale
+                        Formulaire de demande
+                        """)
+        );
+
+        documentRepository.findAll().forEach(doc -> {
+            boolean modifie = false;
+            Boolean lieuUnique = lieuUniqueParLibelle.get(doc.getLibelle());
+            if (lieuUnique != null && doc.getEstLieuUnique() == null) {
+                doc.setEstLieuUnique(lieuUnique);
+                modifie = true;
+            }
+            String dossier = dossierParLibelle.get(doc.getLibelle());
+            if (dossier != null && doc.getDossier() == null) {
+                doc.setDossier(dossier);
+                modifie = true;
+            }
+            if (modifie) {
+                documentRepository.save(doc);
+                log.info("Document '{}' mis à jour (estLieuUnique/dossier).", doc.getLibelle());
+            }
+        });
     }
 
     private Profile createProfile(String nom) {
@@ -445,9 +592,11 @@ createLocalisation(
                 .orElseGet(() -> typeDocumentRepository.save(TypeDocument.builder().libelle(libelle).build()));
     }
 
-    private Document createDocument(String libelle, Integer ageMin, Categorie cat, Administration adm, TypeDocument type) {
+    private Document createDocument(String libelle, Integer ageMin, Boolean estLieuUnique, Categorie cat, Administration adm, TypeDocument type, String dossier) {
         return documentRepository.save(Document.builder()
-                .libelle(libelle).ageMinimum(ageMin).categorie(cat).administration(adm).typeDocument(type).build());
+                .libelle(libelle).ageMinimum(ageMin).estLieuUnique(estLieuUnique)
+                .dossier(dossier)
+                .categorie(cat).administration(adm).typeDocument(type).build());
     }
 
     private ProcedureMere createProcedureMere(Document doc, Double delai, Double cout) {
@@ -455,14 +604,75 @@ createLocalisation(
         return procedureMereRepository.save(ProcedureMere.builder().document(doc).procedureFille(pf).build());
     }
 
-    private User createUser(String nom, String prenom, String email, String mdp, String tel, String cin) {
+    private User createUser(String nom, String prenom, String email, String mdp, String tel, String cin,
+                                String dateNaissance, String lieuNaissance, String nationalite,
+                                String nomPere, String prenomPere, String nomMere, String prenomMere,
+                                String adresseResidence, Fokontany fokontanyResidence) {
         return userRepository.save(User.builder()
                 .nom(nom).prenom(prenom).email(email).telephone(tel)
-                .motDePasse(passwordEncoder.encode(mdp)).cin(cin).estActif(true).build());
+                .motDePasse(passwordEncoder.encode(mdp)).cin(cin)
+                .dateNaissance(dateNaissance)
+                .lieuNaissance(lieuNaissance)
+                .nationalite(nationalite)
+                .nomPere(nomPere).prenomPere(prenomPere)
+                .nomMere(nomMere).prenomMere(prenomMere)
+                .adresseResidence(adresseResidence)
+                .fokontanyResidence(fokontanyResidence)
+                .estActif(true).build());
     }
 
     private void assignProfile(User user, Profile profile) {
         asso3Repository.save(Asso3.builder().user(user).profile(profile).build());
+    }
+
+    private void seedGeographie() {
+        if (communeRepository.count() > 0) {
+            log.info("Géographie (commune, arrondissements, fokontany) déjà en place, seed ignoré.");
+            return;
+        }
+
+        Commune cua = createCommune("Commune Urbaine d'Antananarivo");
+
+        Arrondissement arAnalakely = createArrondissement("Analakely", cua);
+        Arrondissement arAntsakaviro = createArrondissement("Antsakaviro", cua);
+        Arrondissement arAmbohijatovo = createArrondissement("Ambohijatovo", cua);
+        Arrondissement arMahamasina = createArrondissement("Mahamasina", cua);
+        Arrondissement arManjakamiadana = createArrondissement("Manjakamiadana", cua);
+        Arrondissement arAmpasamadinika = createArrondissement("Ampasamadinika", cua);
+
+        createFokontany("Antanimalalaka", arAnalakely);
+        createFokontany("Ambatovinaky", arAnalakely);
+        createFokontany("Fihaonana", arAnalakely);
+        createFokontany("Ambodirano", arAntsakaviro);
+        createFokontany("Antsakaviro", arAntsakaviro);
+        createFokontany("Ambohijatovo", arAmbohijatovo);
+        createFokontany("Andravoahangy", arAmbohijatovo);
+        createFokontany("Mahamasina", arMahamasina);
+        createFokontany("Ankadifotsy", arMahamasina);
+        createFokontany("Anosy", arManjakamiadana);
+        createFokontany("Manjakamiadana", arManjakamiadana);
+        createFokontany("Ampasamadinika", arAmpasamadinika);
+        createFokontany("Mandialaza", arAmpasamadinika);
+
+        log.info("Géographie (1 commune, {} arrondissements, {} fokontany) insérée.",
+                arrondissementRepository.count(), fokontanyRepository.count());
+    }
+
+    private Fokontany fkt(String libelle) {
+        return fokontanyRepository.findByLibelle(libelle)
+                .orElseThrow(() -> new IllegalStateException("Fokontany introuvable : " + libelle));
+    }
+
+    private Commune createCommune(String libelle) {
+        return communeRepository.save(Commune.builder().libelle(libelle).build());
+    }
+
+    private Arrondissement createArrondissement(String libelle, Commune commune) {
+        return arrondissementRepository.save(Arrondissement.builder().libelle(libelle).commune(commune).build());
+    }
+
+    private Fokontany createFokontany(String libelle, Arrondissement arrondissement) {
+        return fokontanyRepository.save(Fokontany.builder().libelle(libelle).arrondissement(arrondissement).build());
     }
 
     private void createDemande(String libelle, String reference, StatutDemande statut, ProcedureMere pm, User user) {
